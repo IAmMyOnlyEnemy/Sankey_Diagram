@@ -12,25 +12,28 @@ files_dict = {}
 i = 0
 for line in lines:
   input_list = line.split(",")
-  print(input_list)
+  #print(input_list)
   if input_list[0] not in jobs_dict:
     jobs_dict.update({input_list[0] : i})
     i += 1
 
-  if input_list[2] not in files_dict:
-    if input_list[3] == "Output":
+  if input_list[4] not in files_dict:
+    if input_list[5] == "NEW":
       file_usage = [input_list[0]]
     else:
-      file_usage = ["-", input_list[0]]
+      file_usage = [0, input_list[0]]
   else:
-    file_usage = files_dict[input_list[2]]
-    if input_list[3] == "Output":
+    file_usage = files_dict[input_list[4]]
+    if input_list[5] == "NEW":
       file_usage[0] = [input_list[0]]
     else:
       file_usage.append(input_list[0])
 
-  files_dict.update({input_list[2] : file_usage})
+  files_dict.update({input_list[4] : file_usage})
 file1.close()
+
+#print(jobs_dict)
+#print(files_dict)
 
 jobs_list = list(jobs_dict.keys())
 
