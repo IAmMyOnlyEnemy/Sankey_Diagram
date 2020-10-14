@@ -1,0 +1,147 @@
+Option Explicit
+Dim SH As Worksheet
+Dim CL As Range
+Dim is_CFT As Boolean
+Dim is_JOB As Boolean
+Dim is_File As Boolean
+Dim Run_Env As String
+
+Const Input_file As String = "Inp_"
+Const Output_file As String = "Out_"
+Const IO_file As String = "IOu_"
+Const CFT_Input As String = "CIn_"
+Const CFT_Output As String = "COu_"
+Const Tmp_file As String = "Tmp_"
+Const Cataloged_file As String = "Ctg_"
+
+
+
+Private Sub Worksheet_BeforeDoubleClick(ByVal Target As Range, Cancel As Boolean)
+    If Target.Row = 1 Then Exit Sub
+    Dim i As Long
+    i = 0
+    Set SH = Excel.Worksheets.Item(1)
+    Set CL = SH.Cells(2, 1)
+    
+    If Len(Trim(Target.Value)) < 9 Then
+        is_File = False
+        If Left(Target.Value, 3) = "RDE" Or Left(Target.Value, 3) = "PDE" Then
+            is_JOB = True
+            is_CFT = False
+            Call Treat_JOB(Target)
+        Else
+            is_JOB = False
+            is_CFT = True
+            Call Treat_CFT(Target)
+        End If
+    Else
+        is_JOB = False
+        is_CFT = False
+        is_File = True
+    End If
+    Cancel = True
+End Sub
+
+Sub Treat_CFT(ByVal rCL As Range)
+    Excel.ActiveSheet.Range(rCL.Offset(0, 1), rCL.Offset(100, 15)).Clear
+    Dim CL1 As Range
+    Dim i As Integer
+    i = 0
+    Set CL1 = Excel.Worksheets.Item(1).Cells(2, 1)
+    Do While CL1.Value <> ""
+        If CL1.Offset(0, 5).Value = rCL.Value Then
+            rCL.Offset(i, 1).Value = CL1.Value
+            rCL.Offset(i, 2).Value = CL1.Offset(0, 4).Value
+            Call Get_File_as_Output(rCL.Offset(i, 2))
+            i = i + 1
+        End If
+        Set CL1 = CL1.Offset(1, 0)
+    Loop
+End Sub
+
+Sub Get_File_as_Output(ByVal oCL As Range)
+    Excel.ActiveSheet.Range(oCL.Offset(0, 1), oCL.Offset(100, 15)).Clear
+    Dim CL1 As Range
+    Set CL1 = Excel.Worksheets.Item(1).Cells(2, 1)
+    
+    Do While CL1.Value <> ""
+        If CL1.Offset(0, 4).Value = oCL.Value And CL1.Offset(0, 6).Value = "Output" Then
+            oCL.Offset(0, 1).Value = CL1.Value '& " / " & CL1.Offset(0, 2).Value
+        End If
+        Set CL1 = CL1.Offset(1, 0)
+    Loop
+End Sub
+
+Sub Treat_JOB(ByVal fCL As Range)
+    Excel.ActiveSheet.Range(fCL.Offset(0, 1), fCL.Offset(100, 15)).Clear
+    Dim CL1 As Range
+    Set CL1 = Excel.Worksheets.Item(1).Cells(2, 1)
+    
+    Dim my_collection As Collection
+    Set my_collection = New Collection
+    
+    Dim i As Integer
+    i = 1
+    
+    Do While CL1.Value <> ""
+        If CL1.Offset.Value = fCL.Value Then
+            If CL1.Offset(0, 6).Value = "Input" Then
+                my_collection.Add Input_file & CL1.Offset(0, 4).Value, "Key" & i
+                i = i + 1
+            End If
+            If CL1.Offset(0, 6).Value = "Output" Then
+                my_collection.Add Output_file & CL1.Offset(0, 4).Value, "Key" & i
+                i = i + 1
+            End If
+            If CL1.Offset(0, 6).Value = "I/O" Then
+                my_collection.Add IO_file & CL1.Offset(0, 4).Value, "Key" & i
+                i = i + 1
+            End If
+            If CL1.Offset(0, 6).Value = "CFT Input" Then
+                my_collection.Add CFT_Input & CL1.Offset(0, 4).Value, "Key" & i
+                i = i + 1
+            End If
+            If CL1.Offset(0, 6).Value = "CFT Out" Then
+                my_collection.Add CFT_Output & CL1.Offset(0, 4).Value, "Key" & i
+                i = i + 1
+            End If
+            If CL1.Offset(0, 6).Value = "Temp" Then
+                my_collection.Add Tmp_file & CL1.Offset(0, 4).Value, "Key" & i
+                i = i + 1
+            End If
+            If CL1.Offset(0, 6).Value = "Cataloged" Then
+                my_collection.Add Cataloged_file & CL1.Offset(0, 4).Value, "Key" & i
+                i = i + 1
+            End If
+        End If
+        Set CL1 = CL1.Offset(1, 0)
+    Loop
+    
+    Dim j As Integer
+    j = 1
+    Dim k As Integer
+    k = 0
+    For j = 1 To my_collection.Count
+        fCL.Offset(k, 1).Value = Mid(my_collection.Item(j), 5, 100)
+        Select Case Left(my_collection.Item(j), 4)
+        Case Input_file
+            fCL.Offset(k, 1).Interior.ColorIndex = 27
+        Case Output_file
+            fCL.Offset(k, 1).Interior.ColorIndex = 4
+        Case IO_file
+            fCL.Offset(k, 1).Interior.ColorIndex = 7
+        Case CFT_Input
+            fCL.Offset(k, 1).Interior.ColorIndex = 8
+        Case CFT_Output
+            fCL.Offset(k, 1).Interior.ColorIndex = 31
+        Case Tmp_file
+            fCL.Offset(k, 1).Interior.ColorIndex = 15
+        Case Else
+            fCL.Offset(k, 1).Interior.ColorIndex = 24
+        End Select
+        k = k + 1
+    Next
+    
+    Set my_collection = Nothing
+    
+End Sub

@@ -1,0 +1,232 @@
+    Option Explicit
+    
+    Const file_name As String = "C:\Users\sergiu.enache\Desktop\Personale\Development CFTs Chain with Andrei\JOBSRDEU.txt"
+    
+    Dim text_line As String
+    Dim i As Long
+    Dim my_SH As Worksheet
+    Dim CL As Range
+    Dim objFSO
+    Dim objFile
+    'Dim CL_Text As String
+    
+    Dim i_STEP As Long
+    Dim i_DDCARD As Long
+    Dim i_DSN1 As Long
+    Dim i_DSN2 As Long
+    Dim i_DISP As Long
+    
+    Dim has_STEP As Boolean
+    Dim has_DDCARD As Boolean
+    Dim has_DSN As Boolean
+    Dim has_DISP As Boolean
+    
+    Dim JOB_Name As String
+    Dim STEP_Name As String
+    Dim PROG_Name As String
+    Dim DDCARD_Name As String
+    Dim DSN_Name As String
+    Dim DISP_Name As String
+    Dim IO_Name As String
+
+Sub List_the_jobs()
+   
+    Set my_SH = Excel.Worksheets.Item(1)
+    Set CL = my_SH.Range(my_SH.Cells(2, 1), my_SH.Cells(50000, 10))
+    'CL.Font.FontStyle = "Consolas"
+    CL.Clear
+    Set CL = my_SH.Cells(1, 1)
+
+    i = 0
+    
+    Set objFSO = CreateObject("Scripting.FileSystemObject")
+    Set objFile = objFSO.OpenTextFile(file_name, 1)
+    
+    Do Until objFile.AtEndOfStream
+        text_line = objFile.ReadLine
+        
+        If Left(text_line, 4) <> "V//*" Then
+            Call Get_JOBNAME
+            Call Get_STEPNAME
+            Call Get_DDCARDNAME
+            Call Get_DSNNAME
+            Call Get_DISPNAME
+        End If
+        
+        i = i + 1
+        If text_line = "" Then Exit Sub
+        If i > 250000 Then Exit Sub
+        
+    Loop
+    
+    objFile.Close
+    
+End Sub
+
+Sub Get_JOBNAME()
+    If (Mid(text_line, 2, 11) = "MEMBER NAME") Then
+        Set CL = CL.Offset(1, 0)
+        JOB_Name = Trim(Right(text_line, 67))
+        CL.Value = JOB_Name
+        has_STEP = False
+    End If
+End Sub
+
+Sub Get_STEPNAME()
+    i_STEP = InStr(1, text_line, " EXEC ", vbTextCompare)
+    If i_STEP > 0 Then
+        If has_STEP Then
+            Set CL = CL.Offset(1, 0)
+            CL.Value = JOB_Name
+        Else
+            has_STEP = True
+        End If
+        STEP_Name = Trim(Mid(text_line, 4, 9))
+        CL.Offset(0, 1).Value = STEP_Name
+        
+        PROG_Name = Trim(Mid(text_line, i_STEP + 5, 25))
+        If InStr(1, PROG_Name, ",", vbTextCompare) Then
+            PROG_Name = Left(PROG_Name, InStr(1, PROG_Name, ",", vbTextCompare) - 1)
+        End If
+        PROG_Name = Replace(PROG_Name, "PGM=", "")
+        PROG_Name = Trim(Replace(PROG_Name, "PROC=", ""))
+        CL.Offset(0, 2).Value = PROG_Name
+        has_DDCARD = False
+    End If
+    If InStr(1, text_line, "PROG (", vbTextCompare) > 0 Then
+        PROG_Name = Trim(Mid(text_line, InStr(1, text_line, "PROG (", vbTextCompare) + 6, 8))
+        CL.Offset(0, 2).Value = PROG_Name
+    End If
+    
+    If InStr(1, PROG_Name, ")", vbTextCompare) > 0 Then
+        PROG_Name = Trim(Left(PROG_Name, InStr(1, PROG_Name, ")", vbTextCompare) - 1))
+        CL.Offset(0, 2).Value = PROG_Name
+    End If
+End Sub
+
+Sub Get_DDCARDNAME()
+    If PROG_Name = "SIGNCFT" Then
+        i_DDCARD = InStr(1, text_line, "SUNNAME", vbTextCompare)
+        If i_DDCARD > 0 Then
+            If has_DDCARD Then
+                Set CL = CL.Offset(1, 0)
+                CL.Value = CL.Offset(-1, 0).Value
+                'CL.Value = JOB_Name
+                CL.Offset(0, 1).Value = STEP_Name
+                CL.Offset(0, 2).Value = PROG_Name
+            Else
+                has_DDCARD = True
+            End If
+            DDCARD_Name = Trim(Mid(text_line, i_DDCARD + 8, 8))
+            DDCARD_Name = Replace(DDCARD_Name, ",", "")
+            CL.Offset(0, 5).Value = DDCARD_Name
+            has_DSN = False
+        End If
+    Else
+        i_DDCARD = InStr(1, text_line, " DD ", vbTextCompare)
+        If i_DDCARD > 0 Then
+            If has_DDCARD Then
+                Set CL = CL.Offset(1, 0)
+                CL.Value = CL.Offset(-1, 0).Value
+                'CL.Value = JOB_Name
+                CL.Offset(0, 1).Value = STEP_Name
+                CL.Offset(0, 2).Value = PROG_Name
+            Else
+                has_DDCARD = True
+            End If
+            DDCARD_Name = Trim(Mid(text_line, 4, i_DDCARD - 4))
+            CL.Offset(0, 3).Value = DDCARD_Name
+            has_DSN = False
+        End If
+    End If
+End Sub
+
+Sub Get_DSNNAME()
+    If PROG_Name = "SIGNCFT" Then
+        i_DSN1 = InStr(1, text_line, "DSNAME=", vbTextCompare)
+        If i_DSN1 > 0 Then
+            If has_DSN Then
+                Set CL = CL.Offset(1, 0)
+                CL.Value = JOB_Name
+                CL.Offset(0, 1).Value = STEP_Name
+                CL.Offset(0, 2).Value = PROG_Name
+                CL.Offset(0, 3).Value = DDCARD_Name
+            Else
+                has_DSN = True
+            End If
+            DSN_Name = Trim(Mid(text_line, i_DSN1 + 7, 80 - i_DSN1 - 7))
+            DSN_Name = Replace(DSN_Name, ",", "")
+            DSN_Name = Replace(DSN_Name, "'", "")
+            CL.Offset(0, 4).Value = DSN_Name
+            CL.Offset(0, 6).Value = "CFT Out"
+        End If
+    Else
+        i_DSN1 = InStr(1, text_line, "DSN=", vbTextCompare)
+        If i_DSN1 > 0 Then
+            If has_DSN Then
+                Set CL = CL.Offset(1, 0)
+                CL.Value = JOB_Name
+                CL.Offset(0, 1).Value = STEP_Name
+                CL.Offset(0, 2).Value = PROG_Name
+                CL.Offset(0, 3).Value = DDCARD_Name
+            Else
+                has_DSN = True
+            End If
+            
+            i_DSN2 = InStr(i_DSN1, text_line, ",", vbTextCompare)
+            If i_DSN2 > 0 Then
+                DSN_Name = Trim(Mid(text_line, i_DSN1 + 4, i_DSN2 - i_DSN1 - 4))
+            Else
+                DSN_Name = Trim(Mid(text_line, i_DSN1 + 4, 80 - i_DSN1 - 4))
+            End If
+            
+            i_DSN2 = InStr(1, DSN_Name, "(", vbTextCompare)
+            If i_DSN2 > 0 Then
+                DSN_Name = Left(DSN_Name, i_DSN2 - 1)
+            End If
+            
+            CL.Offset(0, 4).Value = DSN_Name
+        End If
+    End If
+End Sub
+
+Sub Get_DISPNAME()
+    DISP_Name = ""
+    IO_Name = ""
+    i_DISP = InStr(1, text_line, "DISP=", vbTextCompare)
+    If i_DISP > 0 Then
+        If InStr(1, text_line, "SHR", vbTextCompare) Then
+            DISP_Name = "SHR"
+            IO_Name = "Input"
+        ElseIf InStr(1, text_line, "NEW", vbTextCompare) Then
+            DISP_Name = "NEW"
+            IO_Name = "Output"
+        ElseIf InStr(1, text_line, "MOD", vbTextCompare) Then
+            DISP_Name = "MOD"
+            IO_Name = "I/O"
+        Else
+            DISP_Name = "OLD"
+            IO_Name = "I/O"
+        End If
+
+        If Left(DSN_Name, 1) = "&" Then
+            IO_Name = "Temp"
+        End If
+        
+        If STEP_Name = "STEPCTLG" And PROG_Name = "IEFBR14" Then
+            IO_Name = "Cataloged"
+        End If
+        CL.Offset(0, 5).Value = DISP_Name
+        CL.Offset(0, 6).Value = IO_Name
+    End If
+    If DDCARD_Name = "CARTFOR" Then
+        i_DISP = InStr(1, text_line, "APPLI=", vbTextCompare)
+        If i_DISP > 0 Then
+            DISP_Name = Trim(Mid(text_line, i_DISP + 6, 8))
+            IO_Name = "CFT Input"
+            CL.Offset(0, 5).Value = DISP_Name
+            CL.Offset(0, 6).Value = IO_Name
+        End If
+    End If
+
+End Sub

@@ -1,0 +1,134 @@
+    Option Explicit
+    Option Base 1
+    
+    Dim i As Long
+    Dim j As Long
+    Dim this_SH As Worksheet
+    Dim other_SH As Worksheet
+    Dim CL As Range
+    Dim my_JOB As String
+    
+    Dim Row_Info(1 To 7) As String
+    
+Sub List_Dependencies()
+
+    Set other_SH = Excel.Worksheets.Item(1)
+    Set this_SH = Excel.Worksheets.Item(2)
+    
+    this_SH.Range(Cells(2, 1), Cells(100, 1)).Clear
+    this_SH.Range(Cells(2, 3), Cells(100, 3)).Clear
+    
+    my_JOB = UCase(this_SH.Cells(2, 2).Value)
+    this_SH.Cells(2, 2).Value = my_JOB
+    Set CL = other_SH.Cells(2, 1)
+    
+    i = 2
+    j = 2
+    
+    Do While CL.Value <> ""
+        If CL.Value = my_JOB Then
+            If CL.Offset(0, 4).Value <> "" Then
+                If CL.Offset(0, 6).Value = "Input" Then
+                    this_SH.Cells(i, 1).Value = CL.Offset(0, 4).Value
+                    i = i + 1
+                ElseIf CL.Offset(0, 6).Value = "Output" Or CL.Offset(0, 6).Value = "I/O" Then
+                    this_SH.Cells(j, 3).Value = CL.Offset(0, 4).Value
+                    j = j + 1
+                End If
+            End If
+        End If
+        Set CL = CL.Offset(1, 0)
+    Loop
+
+End Sub
+
+Sub Button_Input()
+
+Excel.ActiveSheet.Cells(1, 1).Value = "Input"
+
+End Sub
+
+Sub Button_Output()
+
+Excel.ActiveSheet.Cells(1, 1).Value = "Output"
+
+End Sub
+
+Sub Button_CFT()
+
+Excel.ActiveSheet.Cells(1, 1).Value = "CFT"
+    
+'    Dim CFT_Name As String
+'    CFT_Name = UCase(Trim(Excel.ActiveSheet.Cells(2, 1).Value))
+'
+'    Dim Sending_JOB As String
+'    Dim File_Sent As String
+'    Dim JOB_Creates_File As String
+'
+'    Call Get_Row_Info(CFT_Name, 5)
+'
+'    If Row_Info(7) = "CFT Out" Then
+'        Excel.ActiveSheet.Cells(2, 2).Value = Row_Info(1)
+'        Excel.ActiveSheet.Cells(2, 3).Value = Row_Info(5)
+'        Excel.ActiveSheet.Cells(2, 4).Value = Row_Info(3)
+'    End If
+
+End Sub
+
+Sub Get_Row_Info(ByVal my_value As String, ByVal iCol As Integer)
+
+    Dim CL1 As Range
+    Dim i As Integer
+    For i = 1 To 7
+        Row_Info(i) = ""
+    Next
+    Set CL1 = Excel.Worksheets.Item(1).Cells(2, 1)
+    Do While CL1.Value <> ""
+        If CL1.Offset(0, iCol).Value = my_value Then
+            For i = 1 To 7
+                Row_Info(i) = CL1.Offset(0, i - 1).Value
+            Next
+            Exit Sub
+        End If
+        
+        Set CL1 = CL1.Offset(1, 0)
+    Loop
+
+End Sub
+
+
+
+Sub aaaaa()
+
+Dim rng As Range
+Set rng = Range(Selection.Address)
+MsgBox rng.Value
+
+End Sub
+
+Sub Get_JOB_Files()
+
+End Sub
+
+
+Sub pass_variables_byval()
+Dim myString As String
+myString = "hello"
+sub_sub2 myString
+MsgBox myString
+End Sub
+
+Sub sub_sub2(ByRef myString)
+myString = "goodbye"
+End Sub
+
+Sub ASDASDASDASD()
+    Dim CL As Range
+    Set CL = Excel.ActiveSheet.Cells(1, 1)
+    Dim i As Integer
+    For i = 0 To 56
+        Set CL = Excel.ActiveSheet.Cells(i + 1, 1)
+        CL.Offset(0, 1).Value = i
+        CL.Interior.ColorIndex = i
+    Next
+End Sub
