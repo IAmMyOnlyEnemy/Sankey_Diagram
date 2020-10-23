@@ -20,7 +20,7 @@ def read_input():
 	'''
 	Read the settings file and fill the dictionary with global settings
 	'''
-	in_file = 'JOBS_01.txt'
+	in_file = 'JOBS_03.txt'
 
 	job_name = ''
 	program_name = ''
