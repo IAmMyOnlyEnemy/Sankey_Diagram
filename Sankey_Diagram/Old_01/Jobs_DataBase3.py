@@ -37,7 +37,6 @@ files_to_ignore.append("PDEUVSM.EPUCLC")
 files_to_ignore.append("PDEUVSM.EPUDOC")
 files_to_ignore.append("CDA9.CA7.SY0C.PARMLIB")
 files_to_ignore.append("PDEUPAP.PDEGD515.ARCO")
-files_to_ignore.append("PDEUQSM.S5D00001.NECWA000.CWAESSAI")
 
 jobs_dict = {}
 in_files_dict = {}
@@ -52,7 +51,6 @@ is_SIGNCFT = False
 file2 = open("for testing.txt",'w')
 file3 = open("for testing2.txt",'w')
 progs = []
-label_list = []
 
 def read_input():
 	'''
@@ -80,7 +78,6 @@ def read_input():
 								program = ''
 								)
 				jobs_dict.update({job_name : job_dict})
-				label_list.append(job_name)
 				is_STEPCTLG = False
 
 			if " EXEC " in line and line[:2] == "//":
@@ -97,13 +94,11 @@ def read_input():
 					program_name = line[line.find(" EXEC ")+6:line.find(",")].strip()
 				if program_name != "DB2BATCH" and not is_STEPCTLG:
 					jobs_dict[job_name]["program"] = program_name
-					label_list[len(label_list)-1] = "{0}({1})".format(label_list[len(label_list)-1][:8],program_name)
 					file2.writelines("{0} - {1}\n".format(job_name,program_name))
 
 			if "RUN PROG" in line and not is_STEPCTLG:
 				program_name = line[line.find("(")+1:line.find(")")].strip()
 				jobs_dict[job_name]["program"] = program_name
-				label_list[len(label_list)-1] = "{0}({1})".format(label_list[len(label_list)-1][:8],program_name)
 				file2.writelines("{0} - {1}\n".format(job_name,program_name))
 
 			if "DSN=" in line and not is_STEPCTLG:
@@ -164,81 +159,13 @@ def read_input():
 	file3.close()
 	file4 = open("for testing3.txt",'w')
 	progs.sort()
-
+	#for my_progs in progs:
 	for my_progs in in_files_dict:
 		file4.writelines("{0} --> {1}\n".format(my_progs, in_files_dict[my_progs]))
-		#if len(in_files_dict[my_progs]['output']) > 1:
-		#	print("{0} --> {1}\n".format(my_progs, in_files_dict[my_progs]))
+		if len(in_files_dict[my_progs]['output']) > 1:
+			print("{0} --> {1}\n".format(my_progs, in_files_dict[my_progs]))
 
 	file4.close()
-
-	source_list = []
-	target_list = []
-	value_list = []
-	hover_list = []
-
-	test_files = [
-				'PDEUFTE.NBB00102.NECOBAI0.FEGKR000',
-				'PDEUFTE.NBB00103.NECOBAI0.FEGKV000',
-				'PDEUFTE.NBB00104.NECOBAI0.FVEKR000',
-				'PDEUFTE.NBB00105.NECOBAI0.FVEKV000',
-				'PDEUTMP.SBB00056.NECOBAI0.DCOBAERR',
-				'PDEUQSM.SBB00082.SORT0000.SORTOUT0',
-				'PDEUTMP.S7XW0006.EXISPOOL.DDN00100'
-				]
-	i = 0
-	for test_file in in_files_dict:
-		for job1 in in_files_dict[test_file]['output']:
-			#if job1 not in label_list:
-			#	label_list.append(job1)
-			for job2 in in_files_dict[test_file]['input']:
-				if jobs_dict[job1]['idx'] != jobs_dict[job2]['idx']:
-					source_list.append(jobs_dict[job1]['idx'])
-					target_list.append(jobs_dict[job2]['idx'])
-					value_list.append(1)
-					hover_list.append(test_file)
-				#if job2 not in label_list:
-				#	label_list.append(job2)
-		i += 1
-		if i > 100:
-			break
-
-	#print(source_list)
-	#print(target_list)
-	#print(value_list)
-	#print(label_list)
-
-	line_dict = dict(color = "green", width = 0.5)
-
-	node_dict = dict(
-					pad = 15,
-					thickness = 20,
-					line = line_dict,
-					label = label_list,
-					customdata = label_list,
-					hovertemplate="%{customdata}",
-					color = "blue"
-					)
-	link_dict = dict(
-					source = source_list,
-					target = target_list,
-					value = value_list,
-					customdata = hover_list,
-					hovertemplate='%{customdata}<br />from %{source.customdata}<br />to %{target.customdata}<extra></extra>'
-					)
-
-	fig = go.Figure(data=[go.Sankey(
-									node = node_dict,
-									link = link_dict
-									)])
-
-	xaxis_dict = dict(rangeslider=dict(visible=True),type="linear")
-	fig.update_layout(
-						xaxis=xaxis_dict,
-						title_text="Complex Sankey Diagram",
-						font_size=10
-						)
-	plot(fig, auto_open=True)
 
 def update_file_dict(my_file, my_job, my_type):
 	if my_type == 'input':
