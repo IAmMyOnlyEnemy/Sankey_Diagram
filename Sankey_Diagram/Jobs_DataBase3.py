@@ -54,6 +54,33 @@ file3 = open("for testing2.txt",'w')
 progs = []
 label_list = []
 
+job_level_dict = dict(
+				ICEGENER = 0,
+				ICEMAN   = 0,
+				ICETOOL  = 0,
+				IDCAMS   = 0,
+				IEBCOPY  = 0,
+				IEBDG    = 0,
+				IEBGENER = 0,
+				IEBPTPCH = 0,
+				IEFBR14  = 0,
+				IKJEFT01 = 0,
+				IKJEFT1A = 0,
+				IKJEFT1B = 0,
+				IRENCFT  = 0,
+				GCTVWAIT = 0,
+				REXBAT01 = 1,
+				REXBAT1B = 1,
+				REXBATCH = 1,
+				RGISPOOL = 1,
+				SASSBEND = 1,
+				SASSBSTR = 1,
+				SIGNALIP = 1,
+				SIGNCFT  = 1,
+				SIGNMESS = 1,
+				SORT     = 1
+				)
+
 def read_input():
 	'''
 	Read the job list file:
@@ -70,14 +97,18 @@ def read_input():
 			if " JOB " in line and line[:2] == "//":
 				try:
 					file3.writelines("{0} - {1}\n".format(job_name,jobs_dict[job_name]))
+					#if len(jobs_dict[jobs_dict]['input']) == 0 and len(jobs_dict[jobs_dict]['output']) == 0:
+					#	print(jobs_dict[job_name])
 				except:
 					pass
+
 				job_name = line[line.find('//')+2:line.find('JOB')].strip()
 				job_dict = dict(
 								idx = len(jobs_dict),
 								input = [],
 								output = [],
-								program = ''
+								program = '',
+								program_level = 0
 								)
 				jobs_dict.update({job_name : job_dict})
 				label_list.append(job_name)
@@ -96,14 +127,28 @@ def read_input():
 				else:
 					program_name = line[line.find(" EXEC ")+6:line.find(",")].strip()
 				if program_name != "DB2BATCH" and not is_STEPCTLG:
-					jobs_dict[job_name]["program"] = program_name
-					label_list[len(label_list)-1] = "{0}({1})".format(label_list[len(label_list)-1][:8],program_name)
+					try:
+						program_lvl = job_level_dict[program_name]
+					except:
+						program_lvl = 3
+					if program_lvl > jobs_dict[job_name]["program_level"]:
+						jobs_dict[job_name]["program"] = program_name
+						jobs_dict[job_name]["program_level"] = program_lvl
+						label_list[len(label_list)-1] = "{0}({1})".format(label_list[len(label_list)-1][:8],program_name)
 					file2.writelines("{0} - {1}\n".format(job_name,program_name))
 
 			if "RUN PROG" in line and not is_STEPCTLG:
 				program_name = line[line.find("(")+1:line.find(")")].strip()
-				jobs_dict[job_name]["program"] = program_name
-				label_list[len(label_list)-1] = "{0}({1})".format(label_list[len(label_list)-1][:8],program_name)
+				#jobs_dict[job_name]["program"] = program_name
+				#label_list[len(label_list)-1] = "{0}({1})".format(label_list[len(label_list)-1][:8],program_name)
+				try:
+					program_lvl = job_level_dict[program_name]
+				except:
+					program_lvl = 3
+				if program_lvl > jobs_dict[job_name]["program_level"]:
+					jobs_dict[job_name]["program"] = program_name
+					jobs_dict[job_name]["program_level"] = program_lvl
+					label_list[len(label_list)-1] = "{0}({1})".format(label_list[len(label_list)-1][:8],program_name)
 				file2.writelines("{0} - {1}\n".format(job_name,program_name))
 
 			if "DSN=" in line and not is_STEPCTLG:
@@ -164,6 +209,7 @@ def read_input():
 	file3.close()
 	file4 = open("for testing3.txt",'w')
 	progs.sort()
+	#print(progs)
 
 	for my_progs in in_files_dict:
 		file4.writelines("{0} --> {1}\n".format(my_progs, in_files_dict[my_progs]))
